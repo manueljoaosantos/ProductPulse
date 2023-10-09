@@ -1,0 +1,44 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+# Define quando o pipeline será acionado. 
+# Neste caso, o pipeline será acionado sempre que houver uma mudança no branch main.
+trigger:
+- main
+
+# Especifica o nome do agente (agent pool) onde os jobs deste pipeline serão executados. 
+pool: agentpulse
+
+# Define variáveis que serão usadas no pipeline.
+variables:
+  buildConfiguration: 'Release'
+
+# Inicio da definição dos passos do pipeline.
+steps:
+
+# Execucao dos testes unitarios
+- task: DotNetCoreCLI@2
+  inputs:
+    command: test
+    projects: '**/*tests/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+    displayName: 'executing tests'
+
+# Compilacao do projeto
+- script: dotnet build --configuration $(buildConfiguration)
+  displayName: 'dotnet build $(buildConfiguration)'
+
+# Publicacao do projeto
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet publish --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: 'src/ProductPulse.API/ProductPulse.API.csproj'
+    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    zipAfterPublish: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'publish artifacts'
